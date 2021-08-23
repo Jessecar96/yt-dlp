@@ -109,7 +109,9 @@ class FFmpegPostProcessor(PostProcessor):
                         'Continuing without ffmpeg.' % (location))
                     self._versions = {}
                     return
-                elif not os.path.isdir(location):
+                elif os.path.isdir(location):
+                    dirname, basename = location, None
+                else:
                     basename = os.path.splitext(os.path.basename(location))[0]
                     basename = next((p for p in programs if basename.startswith(p)), 'ffmpeg')
                     dirname = os.path.dirname(os.path.abspath(location))
@@ -118,7 +120,8 @@ class FFmpegPostProcessor(PostProcessor):
 
                 self._paths = dict(
                     (p, os.path.join(dirname, p)) for p in programs)
-                self._paths[basename] = location
+                if basename:
+                    self._paths[basename] = location
                 self._versions = dict(
                     (p, get_ffmpeg_version(self._paths[p])) for p in programs)
         if self._versions is None:
@@ -589,7 +592,7 @@ class FFmpegMetadataPP(FFmpegPostProcessor):
             metadata_filename = replace_extension(filename, 'meta')
             with io.open(metadata_filename, 'wt', encoding='utf-8') as f:
                 def ffmpeg_escape(text):
-                    return re.sub(r'(=|;|#|\\|\n)', r'\\\1', text)
+                    return re.sub(r'([\\=;#\n])', r'\\\1', text)
 
                 metadata_file_content = ';FFMETADATA1\n'
                 for chapter in chapters:
@@ -799,7 +802,7 @@ class FFmpegSubtitlesConvertorPP(FFmpegPostProcessor):
                 }
 
             info['__files_to_move'][new_file] = replace_extension(
-                info['__files_to_move'][old_file], new_ext)
+                info['__files_to_move'][sub['filepath']], new_ext)
 
         return sub_filenames, info
 

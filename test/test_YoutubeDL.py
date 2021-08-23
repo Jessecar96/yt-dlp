@@ -18,7 +18,7 @@ from yt_dlp.compat import compat_os_name, compat_setenv, compat_str, compat_urll
 from yt_dlp.extractor import YoutubeIE
 from yt_dlp.extractor.common import InfoExtractor
 from yt_dlp.postprocessor.common import PostProcessor
-from yt_dlp.utils import ExtractorError, int_or_none, match_filter_func
+from yt_dlp.utils import ExtractorError, int_or_none, match_filter_func, LazyList
 
 TEST_URL = 'http://localhost/sample.mp4'
 
@@ -668,20 +668,25 @@ class TestYoutubeDL(unittest.TestCase):
             out = ydl.escape_outtmpl(outtmpl) % tmpl_dict
             fname = ydl.prepare_filename(info or self.outtmpl_info)
 
-            if callable(expected):
-                self.assertTrue(expected(out))
-                self.assertTrue(expected(fname))
-            elif isinstance(expected, str):
-                self.assertEqual(out, expected)
-                self.assertEqual(fname, expected)
-            else:
-                self.assertEqual(out, expected[0])
-                self.assertEqual(fname, expected[1])
+            if not isinstance(expected, (list, tuple)):
+                expected = (expected, expected)
+            for (name, got), expect in zip((('outtmpl', out), ('filename', fname)), expected):
+                if callable(expect):
+                    self.assertTrue(expect(got), f'Wrong {name} from {tmpl}')
+                else:
+                    self.assertEqual(got, expect, f'Wrong {name} from {tmpl}')
+
+        # Side-effects
+        original_infodict = dict(self.outtmpl_info)
+        test('foo.bar', 'foo.bar')
+        original_infodict['epoch'] = self.outtmpl_info.get('epoch')
+        self.assertTrue(isinstance(original_infodict['epoch'], int))
+        test('%(epoch)d', int_or_none)
+        self.assertEqual(original_infodict, self.outtmpl_info)
 
         # Auto-generated fields
         test('%(id)s.%(ext)s', '1234.mp4')
         test('%(duration_string)s', ('27:46:40', '27-46-40'))
-        test('%(epoch)d', int_or_none)
         test('%(resolution)s', '1080p')
         test('%(playlist_index)s', '001')
         test('%(autonumber)s', '00001')
@@ -714,7 +719,16 @@ class TestYoutubeDL(unittest.TestCase):
         # Invalid templates
         self.assertTrue(isinstance(YoutubeDL.validate_outtmpl('%(title)'), ValueError))
         test('%(invalid@tmpl|def)s', 'none', outtmpl_na_placeholder='none')
-        test('%()s', 'NA')
+        test('%(..)s', 'NA')
+
+        # Entire info_dict
+        def expect_same_infodict(out):
+            got_dict = json.loads(out)
+            for info_field, expected in self.outtmpl_info.items():
+                self.assertEqual(got_dict.get(info_field), expected, info_field)
+            return True
+
+        test('%()j', (expect_same_infodict, str))
 
         # NA placeholder
         NA_TEST_OUTTMPL = '%(uploader_date)s-%(width)d-%(x|def)s-%(id)s.%(ext)s'
@@ -773,6 +787,12 @@ class TestYoutubeDL(unittest.TestCase):
         test('%(formats.:2:-1)r', repr(FORMATS[:2:-1]))
         test('%(formats.0.id.-1+id)f', '1235.000000')
         test('%(formats.0.id.-1+formats.1.id.-1)d', '3')
+
+        # Laziness
+        def gen():
+            yield from range(5)
+            raise self.assertTrue(False, 'LazyList should not be evaluated till here')
+        test('%(key.4)s', '4', info={'key': LazyList(gen())})
 
         # Empty filename
         test('%(foo|)s-%(bar|)s.%(ext)s', '-.mp4')
@@ -958,54 +978,31 @@ class TestYoutubeDL(unittest.TestCase):
             ydl.process_ie_result(copy.deepcopy(playlist))
             return ydl.downloaded_info_dicts
 
-        def get_ids(params):
-            return [int(v['id']) for v in get_downloaded_info_dicts(params)]
+        def test_selection(params, expected_ids):
+            results = [
+                (v['playlist_autonumber'] - 1, (int(v['id']), v['playlist_index']))
+                for v in get_downloaded_info_dicts(params)]
+            self.assertEqual(results, list(enumerate(zip(expected_ids, expected_ids))))
 
-        result = get_ids({})
-        self.assertEqual(result, [1, 2, 3, 4])
-
-        result = get_ids({'playlistend': 10})
-        self.assertEqual(result, [1, 2, 3, 4])
-
-        result = get_ids({'playlistend': 2})
-        self.assertEqual(result, [1, 2])
-
-        result = get_ids({'playliststart': 10})
-        self.assertEqual(result, [])
-
-        result = get_ids({'playliststart': 2})
-        self.assertEqual(result, [2, 3, 4])
-
-        result = get_ids({'playlist_items': '2-4'})
-        self.assertEqual(result, [2, 3, 4])
-
-        result = get_ids({'playlist_items': '2,4'})
-        self.assertEqual(result, [2, 4])
-
-        result = get_ids({'playlist_items': '10'})
-        self.assertEqual(result, [])
-
-        result = get_ids({'playlist_items': '3-10'})
-        self.assertEqual(result, [3, 4])
-
-        result = get_ids({'playlist_items': '2-4,3-4,3'})
-        self.assertEqual(result, [2, 3, 4])
+        test_selection({}, [1, 2, 3, 4])
+        test_selection({'playlistend': 10}, [1, 2, 3, 4])
+        test_selection({'playlistend': 2}, [1, 2])
+        test_selection({'playliststart': 10}, [])
+        test_selection({'playliststart': 2}, [2, 3, 4])
+        test_selection({'playlist_items': '2-4'}, [2, 3, 4])
+        test_selection({'playlist_items': '2,4'}, [2, 4])
+        test_selection({'playlist_items': '10'}, [])
 
         # Tests for https://github.com/ytdl-org/youtube-dl/issues/10591
-        # @{
-        result = get_downloaded_info_dicts({'playlist_items': '2-4,3-4,3'})
-        self.assertEqual(result[0]['playlist_index'], 2)
-        self.assertEqual(result[1]['playlist_index'], 3)
+        test_selection({'playlist_items': '2-4,3-4,3'}, [2, 3, 4])
+        test_selection({'playlist_items': '4,2'}, [4, 2])
 
-        result = get_downloaded_info_dicts({'playlist_items': '2-4,3-4,3'})
-        self.assertEqual(result[0]['playlist_index'], 2)
-        self.assertEqual(result[1]['playlist_index'], 3)
-        self.assertEqual(result[2]['playlist_index'], 4)
-
-        result = get_downloaded_info_dicts({'playlist_items': '4,2'})
-        self.assertEqual(result[0]['playlist_index'], 4)
-        self.assertEqual(result[1]['playlist_index'], 2)
-        # @}
+        # Tests for https://github.com/yt-dlp/yt-dlp/issues/720
+        # https://github.com/yt-dlp/yt-dlp/issues/302
+        test_selection({'playlistreverse': True}, [4, 3, 2, 1])
+        test_selection({'playliststart': 2, 'playlistreverse': True}, [4, 3, 2])
+        test_selection({'playlist_items': '2,4', 'playlistreverse': True}, [4, 2])
+        test_selection({'playlist_items': '4,2'}, [4, 2])
 
     def test_urlopen_no_file_protocol(self):
         # see https://github.com/ytdl-org/youtube-dl/issues/8227

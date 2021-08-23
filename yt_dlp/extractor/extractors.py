@@ -109,7 +109,13 @@ from .awaan import (
 from .azmedien import AZMedienIE
 from .baidu import BaiduVideoIE
 from .bandaichannel import BandaiChannelIE
-from .bandcamp import BandcampIE, BandcampAlbumIE, BandcampWeeklyIE
+from .bandcamp import (
+    BandcampIE,
+    BandcampAlbumIE,
+    BandcampWeeklyIE,
+    BandcampMusicIE,
+)
+from .bannedvideo import BannedVideoIE
 from .bbc import (
     BBCCoUkIE,
     BBCCoUkArticleIE,
@@ -135,6 +141,7 @@ from .bild import BildIE
 from .bilibili import (
     BiliBiliIE,
     BiliBiliSearchIE,
+    BilibiliCategoryIE,
     BiliBiliBangumiIE,
     BilibiliAudioIE,
     BilibiliAudioAlbumIE,
@@ -151,6 +158,7 @@ from .bitwave import (
     BitwaveStreamIE,
 )
 from .biqle import BIQLEIE
+from .blackboardcollaborate import BlackboardCollaborateIE
 from .bleacherreport import (
     BleacherReportIE,
     BleacherReportCMSIE,
@@ -202,10 +210,7 @@ from .cbc import (
     CBCWatchIE,
     CBCOlympicsIE,
 )
-from .cbs import (
-    CBSIE,
-    ParamountPlusSeriesIE,
-)
+from .cbs import CBSIE
 from .cbslocal import (
     CBSLocalIE,
     CBSLocalArticleIE,
@@ -386,7 +391,10 @@ from .elpais import ElPaisIE
 from .embedly import EmbedlyIE
 from .engadget import EngadgetIE
 from .eporner import EpornerIE
-from .eroprofile import EroProfileIE
+from .eroprofile import (
+    EroProfileIE,
+    EroProfileAlbumIE,
+)
 from .escapist import EscapistIE
 from .espn import (
     ESPNIE,
@@ -414,6 +422,7 @@ from .fc2 import (
     FC2EmbedIE,
 )
 from .fczenit import FczenitIE
+from .filmmodu import FilmmoduIE
 from .filmon import (
     FilmOnIE,
     FilmOnChannelIE,
@@ -531,6 +540,7 @@ from .huffpost import HuffPostIE
 from .hungama import (
     HungamaIE,
     HungamaSongIE,
+    HungamaAlbumPlaylistIE,
 )
 from .hypem import HypemIE
 from .ign import (
@@ -735,6 +745,10 @@ from .minds import (
 from .ministrygrid import MinistryGridIE
 from .minoto import MinotoIE
 from .miomio import MioMioIE
+from .mirrativ import (
+    MirrativIE,
+    MirrativUserIE,
+)
 from .mit import TechTVMITIE, OCWMITIE
 from .mitele import MiTeleIE
 from .mixcloud import (
@@ -969,6 +983,10 @@ from .palcomp3 import (
     PalcoMP3VideoIE,
 )
 from .pandoratv import PandoraTVIE
+from .paramountplus import (
+    ParamountPlusIE,
+    ParamountPlusSeriesIE,
+)
 from .parliamentliveuk import ParliamentLiveUKIE
 from .parlview import ParlviewIE
 from .patreon import PatreonIE
@@ -1029,6 +1047,7 @@ from .pornhd import PornHdIE
 from .pornhub import (
     PornHubIE,
     PornHubUserIE,
+    PornHubPlaylistIE,
     PornHubPagedVideoListIE,
     PornHubUserVideosUploadIE,
 )
@@ -1590,6 +1609,10 @@ from .vodlocker import VodlockerIE
 from .vodpl import VODPlIE
 from .vodplatform import VODPlatformIE
 from .voicerepublic import VoiceRepublicIE
+from .voicy import (
+    VoicyIE,
+    VoicyChannelIE,
+)
 from .voot import (
     VootIE,
     VootSeriesIE,

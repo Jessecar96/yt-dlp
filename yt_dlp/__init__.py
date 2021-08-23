@@ -7,6 +7,7 @@ __license__ = 'Public Domain'
 
 import codecs
 import io
+import itertools
 import os
 import random
 import re
@@ -18,6 +19,7 @@ from .options import (
 )
 from .compat import (
     compat_getpass,
+    compat_shlex_quote,
     workaround_optparse_bug9161,
 )
 from .cookies import SUPPORTED_BROWSERS
@@ -46,14 +48,15 @@ from .downloader import (
 from .extractor import gen_extractors, list_extractors
 from .extractor.common import InfoExtractor
 from .extractor.adobepass import MSO_INFO
-from .postprocessor.ffmpeg import (
+from .postprocessor import (
     FFmpegExtractAudioPP,
     FFmpegSubtitlesConvertorPP,
     FFmpegThumbnailsConvertorPP,
     FFmpegVideoConvertorPP,
     FFmpegVideoRemuxerPP,
+    MetadataFromFieldPP,
+    MetadataParserPP,
 )
-from .postprocessor.metadatafromfield import MetadataFromFieldPP
 from .YoutubeDL import YoutubeDL
 
 
@@ -107,14 +110,14 @@ def _real_main(argv=None):
 
     if opts.list_extractors:
         for ie in list_extractors(opts.age_limit):
-            write_string(ie.IE_NAME + (' (CURRENTLY BROKEN)' if not ie._WORKING else '') + '\n', out=sys.stdout)
+            write_string(ie.IE_NAME + (' (CURRENTLY BROKEN)' if not ie.working() else '') + '\n', out=sys.stdout)
             matchedUrls = [url for url in all_urls if ie.suitable(url)]
             for mu in matchedUrls:
                 write_string('  ' + mu + '\n', out=sys.stdout)
         sys.exit(0)
     if opts.list_extractor_descriptions:
         for ie in list_extractors(opts.age_limit):
-            if not ie._WORKING:
+            if not ie.working():
                 continue
             desc = getattr(ie, 'IE_DESC', ie.IE_NAME)
             if desc is False:
@@ -254,35 +257,7 @@ def _real_main(argv=None):
     else:
         date = DateRange(opts.dateafter, opts.datebefore)
 
-    def parse_compat_opts():
-        parsed_compat_opts, compat_opts = set(), opts.compat_opts[::-1]
-        while compat_opts:
-            actual_opt = opt = compat_opts.pop().lower()
-            if opt == 'youtube-dl':
-                compat_opts.extend(['-multistreams', 'all'])
-            elif opt == 'youtube-dlc':
-                compat_opts.extend(['-no-youtube-channel-redirect', '-no-live-chat', 'all'])
-            elif opt == 'all':
-                parsed_compat_opts.update(all_compat_opts)
-            elif opt == '-all':
-                parsed_compat_opts = set()
-            else:
-                if opt[0] == '-':
-                    opt = opt[1:]
-                    parsed_compat_opts.discard(opt)
-                else:
-                    parsed_compat_opts.update([opt])
-                if opt not in all_compat_opts:
-                    parser.error('Invalid compatibility option %s' % actual_opt)
-        return parsed_compat_opts
-
-    all_compat_opts = [
-        'filename', 'format-sort', 'abort-on-error', 'format-spec', 'no-playlist-metafiles',
-        'multistreams', 'no-live-chat', 'playlist-index', 'list-formats', 'no-direct-merge',
-        'no-youtube-channel-redirect', 'no-youtube-unavailable-videos', 'no-attach-info-json',
-        'embed-thumbnail-atomicparsley', 'seperate-video-versions', 'no-clean-infojson',
-    ]
-    compat_opts = parse_compat_opts()
+    compat_opts = opts.compat_opts
 
     def _unused_compat_opt(name):
         if name not in compat_opts:
@@ -329,7 +304,8 @@ def _real_main(argv=None):
 
     for k, tmpl in opts.outtmpl.items():
         validate_outtmpl(tmpl, '%s output template' % k)
-    for tmpl in opts.forceprint:
+    opts.forceprint = opts.forceprint or []
+    for tmpl in opts.forceprint or []:
         validate_outtmpl(tmpl, 'print template')
 
     if opts.extractaudio and not opts.keepvideo and opts.format is None:
@@ -344,13 +320,29 @@ def _real_main(argv=None):
         if re.match(InfoExtractor.FormatSort.regex, f) is None:
             parser.error('invalid format sort string "%s" specified' % f)
 
-    if opts.metafromfield is None:
-        opts.metafromfield = []
+    def metadataparser_actions(f):
+        if isinstance(f, str):
+            cmd = '--parse-metadata %s' % compat_shlex_quote(f)
+            try:
+                actions = [MetadataFromFieldPP.to_action(f)]
+            except Exception as err:
+                parser.error(f'{cmd} is invalid; {err}')
+        else:
+            cmd = '--replace-in-metadata %s' % ' '.join(map(compat_shlex_quote, f))
+            actions = ((MetadataParserPP.Actions.REPLACE, x, *f[1:]) for x in f[0].split(','))
+
+        for action in actions:
+            try:
+                MetadataParserPP.validate_action(*action)
+            except Exception as err:
+                parser.error(f'{cmd} is invalid; {err}')
+            yield action
+
+    if opts.parse_metadata is None:
+        opts.parse_metadata = []
     if opts.metafromtitle is not None:
-        opts.metafromfield.append('title:%s' % opts.metafromtitle)
-    for f in opts.metafromfield:
-        if re.match(MetadataFromFieldPP.regex, f) is None:
-            parser.error('invalid format string "%s" specified for --parse-metadata' % f)
+        opts.parse_metadata.append('title:%s' % opts.metafromtitle)
+    opts.parse_metadata = list(itertools.chain(*map(metadataparser_actions, opts.parse_metadata)))
 
     any_getting = opts.forceprint or opts.geturl or opts.gettitle or opts.getid or opts.getthumbnail or opts.getdescription or opts.getfilename or opts.getformat or opts.getduration or opts.dumpjson or opts.dump_single_json
     any_printing = opts.print_json
@@ -402,10 +394,10 @@ def _real_main(argv=None):
 
     # PostProcessors
     postprocessors = []
-    if opts.metafromfield:
+    if opts.parse_metadata:
         postprocessors.append({
-            'key': 'MetadataFromField',
-            'formats': opts.metafromfield,
+            'key': 'MetadataParser',
+            'actions': opts.parse_metadata,
             # Run this immediately after extraction is complete
             'when': 'pre_process'
         })
@@ -426,7 +418,7 @@ def _real_main(argv=None):
     # Must be after all other before_dl
     if opts.exec_before_dl_cmd:
         postprocessors.append({
-            'key': 'ExecAfterDownload',
+            'key': 'Exec',
             'exec_cmd': opts.exec_before_dl_cmd,
             'when': 'before_dl'
         })
@@ -458,13 +450,13 @@ def _real_main(argv=None):
     if opts.addmetadata:
         postprocessors.append({'key': 'FFmpegMetadata'})
     if opts.embedsubtitles:
-        already_have_subtitle = opts.writesubtitles
+        already_have_subtitle = opts.writesubtitles and 'no-keep-subs' not in compat_opts
         postprocessors.append({
             'key': 'FFmpegEmbedSubtitle',
             # already_have_subtitle = True prevents the file from being deleted after embedding
             'already_have_subtitle': already_have_subtitle
         })
-        if not already_have_subtitle:
+        if not opts.writeautomaticsub and 'no-keep-subs' not in compat_opts:
             opts.writesubtitles = True
     # --all-sub automatically sets --write-sub if --write-auto-sub is not given
     # this was the old behaviour if only --all-sub was given.
@@ -497,10 +489,10 @@ def _real_main(argv=None):
     # XAttrMetadataPP should be run after post-processors that may change file contents
     if opts.xattrs:
         postprocessors.append({'key': 'XAttrMetadata'})
-    # ExecAfterDownload must be the last PP
+    # Exec must be the last PP
     if opts.exec_cmd:
         postprocessors.append({
-            'key': 'ExecAfterDownload',
+            'key': 'Exec',
             'exec_cmd': opts.exec_cmd,
             # Run this only after the files have been moved to their final locations
             'when': 'after_move'
@@ -550,7 +542,7 @@ def _real_main(argv=None):
         'forcejson': opts.dumpjson or opts.print_json,
         'dump_single_json': opts.dump_single_json,
         'force_write_download_archive': opts.force_write_download_archive,
-        'simulate': opts.simulate or any_getting,
+        'simulate': (any_getting or None) if opts.simulate is None else opts.simulate,
         'skip_download': opts.skip_download,
         'format': opts.format,
         'allow_unplayable_formats': opts.allow_unplayable_formats,

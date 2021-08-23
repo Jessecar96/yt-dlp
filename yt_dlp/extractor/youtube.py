@@ -38,6 +38,7 @@ from ..utils import (
     format_field,
     int_or_none,
     intlist_to_bytes,
+    is_html,
     mimetype2ext,
     network_exceptions,
     orderedSet,
@@ -45,6 +46,7 @@ from ..utils import (
     parse_count,
     parse_duration,
     parse_iso8601,
+    parse_qs,
     qualities,
     remove_start,
     smuggle_url,
@@ -61,10 +63,6 @@ from ..utils import (
     urljoin,
     variadic,
 )
-
-
-def parse_qs(url):
-    return compat_urlparse.parse_qs(compat_urlparse.urlparse(url).query)
 
 
 # any clients starting with _ cannot be explicity requested by the user
@@ -723,11 +721,11 @@ class YoutubeBaseInfoExtractor(InfoExtractor):
                 if message:
                     yield alert_type, message
 
-    def _report_alerts(self, alerts, expected=True):
+    def _report_alerts(self, alerts, expected=True, fatal=True):
         errors = []
         warnings = []
         for alert_type, alert_message in alerts:
-            if alert_type.lower() == 'error':
+            if alert_type.lower() == 'error' and fatal:
                 errors.append([alert_type, alert_message])
             else:
                 warnings.append([alert_type, alert_message])
@@ -793,6 +791,13 @@ class YoutubeBaseInfoExtractor(InfoExtractor):
                     note='%s%s' % (note, ' (retry #%d)' % count if count else ''))
             except ExtractorError as e:
                 if isinstance(e.cause, network_exceptions):
+                    if isinstance(e.cause, compat_HTTPError) and not is_html(e.cause.read(512)):
+                        e.cause.seek(0)
+                        yt_error = try_get(
+                            self._parse_json(e.cause.read().decode(), item_id, fatal=False),
+                            lambda x: x['error']['message'], compat_str)
+                        if yt_error:
+                            self._report_alerts([('ERROR', yt_error)], fatal=False)
                     # Downloading page may result in intermittent 5xx HTTP error
                     # Sometimes a 404 is also recieved. See: https://github.com/ytdl-org/youtube-dl/issues/28289
                     # We also want to catch all other network exceptions since errors in later pages can be troublesome
@@ -937,7 +942,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
                             youtube\.googleapis\.com)/                        # the various hostnames, with wildcard subdomains
                          (?:.*?\#/)?                                          # handle anchor (#/) redirect urls
                          (?:                                                  # the various things that can precede the ID:
-                             (?:(?:v|embed|e)/(?!videoseries))                # v/ or embed/ or e/
+                             (?:(?:v|embed|e|shorts)/(?!videoseries))         # v/ or embed/ or e/ or shorts/
                              |(?:                                             # or the v= param in all its forms
                                  (?:(?:watch|movie)(?:_popup)?(?:\.php)?/?)?  # preceding watch(_popup|.php) or nothing (like /?v=xxxx)
                                  (?:\?|\#!?)                                  # the params delimiter ? or # or #!
@@ -1064,10 +1069,14 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
         '_rtmp': {'protocol': 'rtmp'},
 
         # av01 video only formats sometimes served with "unknown" codecs
-        '394': {'acodec': 'none', 'vcodec': 'av01.0.05M.08'},
-        '395': {'acodec': 'none', 'vcodec': 'av01.0.05M.08'},
-        '396': {'acodec': 'none', 'vcodec': 'av01.0.05M.08'},
-        '397': {'acodec': 'none', 'vcodec': 'av01.0.05M.08'},
+        '394': {'ext': 'mp4', 'height': 144, 'format_note': 'DASH video', 'vcodec': 'av01.0.00M.08'},
+        '395': {'ext': 'mp4', 'height': 240, 'format_note': 'DASH video', 'vcodec': 'av01.0.00M.08'},
+        '396': {'ext': 'mp4', 'height': 360, 'format_note': 'DASH video', 'vcodec': 'av01.0.01M.08'},
+        '397': {'ext': 'mp4', 'height': 480, 'format_note': 'DASH video', 'vcodec': 'av01.0.04M.08'},
+        '398': {'ext': 'mp4', 'height': 720, 'format_note': 'DASH video', 'vcodec': 'av01.0.05M.08'},
+        '399': {'ext': 'mp4', 'height': 1080, 'format_note': 'DASH video', 'vcodec': 'av01.0.08M.08'},
+        '400': {'ext': 'mp4', 'height': 1440, 'format_note': 'DASH video', 'vcodec': 'av01.0.12M.08'},
+        '401': {'ext': 'mp4', 'height': 2160, 'format_note': 'DASH video', 'vcodec': 'av01.0.12M.08'},
     }
     _SUBTITLE_FORMATS = ('json3', 'srv1', 'srv2', 'srv3', 'ttml', 'vtt')
 
@@ -1823,14 +1832,17 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
             'params': {
                 'extractor_args': {'youtube': {'player_skip': ['configs']}},
             },
-        }
+        }, {
+            # shorts
+            'url': 'https://www.youtube.com/shorts/BGQWPY4IigY',
+            'only_matching': True,
+        },
     ]
 
     @classmethod
     def suitable(cls, url):
-        # Hack for lazy extractors until more generic solution is implemented
-        # (see #28780)
-        from .youtube import parse_qs
+        from ..utils import parse_qs
+
         qs = parse_qs(url)
         if qs.get('list', [None])[0]:
             return False
@@ -1945,10 +1957,10 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
         funcname = self._search_regex(
             (r'\b[cs]\s*&&\s*[adf]\.set\([^,]+\s*,\s*encodeURIComponent\s*\(\s*(?P<sig>[a-zA-Z0-9$]+)\(',
              r'\b[a-zA-Z0-9]+\s*&&\s*[a-zA-Z0-9]+\.set\([^,]+\s*,\s*encodeURIComponent\s*\(\s*(?P<sig>[a-zA-Z0-9$]+)\(',
-             r'\bm=(?P<sig>[a-zA-Z0-9$]{2})\(decodeURIComponent\(h\.s\)\)',
-             r'\bc&&\(c=(?P<sig>[a-zA-Z0-9$]{2})\(decodeURIComponent\(c\)\)',
-             r'(?:\b|[^a-zA-Z0-9$])(?P<sig>[a-zA-Z0-9$]{2})\s*=\s*function\(\s*a\s*\)\s*{\s*a\s*=\s*a\.split\(\s*""\s*\);[a-zA-Z0-9$]{2}\.[a-zA-Z0-9$]{2}\(a,\d+\)',
-             r'(?:\b|[^a-zA-Z0-9$])(?P<sig>[a-zA-Z0-9$]{2})\s*=\s*function\(\s*a\s*\)\s*{\s*a\s*=\s*a\.split\(\s*""\s*\)',
+             r'\bm=(?P<sig>[a-zA-Z0-9$]{2,})\(decodeURIComponent\(h\.s\)\)',
+             r'\bc&&\(c=(?P<sig>[a-zA-Z0-9$]{2,})\(decodeURIComponent\(c\)\)',
+             r'(?:\b|[^a-zA-Z0-9$])(?P<sig>[a-zA-Z0-9$]{2,})\s*=\s*function\(\s*a\s*\)\s*{\s*a\s*=\s*a\.split\(\s*""\s*\);[a-zA-Z0-9$]{2}\.[a-zA-Z0-9$]{2}\(a,\d+\)',
+             r'(?:\b|[^a-zA-Z0-9$])(?P<sig>[a-zA-Z0-9$]{2,})\s*=\s*function\(\s*a\s*\)\s*{\s*a\s*=\s*a\.split\(\s*""\s*\)',
              r'(?P<sig>[a-zA-Z0-9$]+)\s*=\s*function\(\s*a\s*\)\s*{\s*a\s*=\s*a\.split\(\s*""\s*\)',
              # Obsolete patterns
              r'(["\'])signature\1\s*,\s*(?P<sig>[a-zA-Z0-9$]+)\(',
@@ -2080,8 +2092,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
         mobj = re.match(cls._VALID_URL, url, re.VERBOSE)
         if mobj is None:
             raise ExtractorError('Invalid URL: %s' % url)
-        video_id = mobj.group(2)
-        return video_id
+        return mobj.group('id')
 
     def _extract_chapters_from_json(self, data, duration):
         chapter_list = traverse_obj(
@@ -2455,7 +2466,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
         yt_query.update(self._generate_player_context(sts))
         return self._extract_response(
             item_id=video_id, ep='player', query=yt_query,
-            ytcfg=player_ytcfg, headers=headers, fatal=False,
+            ytcfg=player_ytcfg, headers=headers, fatal=True,
             default_client=client,
             note='Downloading %s player API JSON' % client.replace('_', ' ').strip()
         ) or None
@@ -2505,17 +2516,35 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
             if client_name in INNERTUBE_CLIENTS and client_name not in original_clients:
                 clients.append(client_name)
 
+        # Android player_response does not have microFormats which are needed for
+        # extraction of some data. So we return the initial_pr with formats
+        # stripped out even if not requested by the user
+        # See: https://github.com/yt-dlp/yt-dlp/issues/501
+        yielded_pr = False
+        if initial_pr:
+            pr = dict(initial_pr)
+            pr['streamingData'] = None
+            yielded_pr = True
+            yield pr
+
+        last_error = None
         while clients:
             client = clients.pop()
             player_ytcfg = master_ytcfg if client == 'web' else {}
             if 'configs' not in self._configuration_arg('player_skip'):
                 player_ytcfg = self._extract_player_ytcfg(client, video_id) or player_ytcfg
 
-            pr = (
-                initial_pr if client == 'web' and initial_pr
-                else self._extract_player_response(
-                    client, video_id, player_ytcfg or master_ytcfg, player_ytcfg, identity_token, player_url, initial_pr))
+            try:
+                pr = initial_pr if client == 'web' and initial_pr else self._extract_player_response(
+                    client, video_id, player_ytcfg or master_ytcfg, player_ytcfg, identity_token, player_url, initial_pr)
+            except ExtractorError as e:
+                if last_error:
+                    self.report_warning(last_error)
+                last_error = e
+                continue
+
             if pr:
+                yielded_pr = True
                 yield pr
 
             # creator clients can bypass AGE_VERIFICATION_REQUIRED if logged in
@@ -2524,13 +2553,10 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
             elif self._is_agegated(pr):
                 append_client(f'{client}_agegate')
 
-        # Android player_response does not have microFormats which are needed for
-        # extraction of some data. So we return the initial_pr with formats
-        # stripped out even if not requested by the user
-        # See: https://github.com/yt-dlp/yt-dlp/issues/501
-        if initial_pr and 'web' not in original_clients:
-            initial_pr['streamingData'] = None
-            yield initial_pr
+        if last_error:
+            if not yielded_pr:
+                raise last_error
+            self.report_warning(last_error)
 
     def _extract_formats(self, streaming_data, video_id, player_url, is_live):
         itags, stream_ids = [], []
@@ -2628,7 +2654,9 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
             yield dct
 
         skip_manifests = self._configuration_arg('skip')
-        get_dash = not is_live and 'dash' not in skip_manifests and self.get_param('youtube_include_dash_manifest', True)
+        get_dash = (
+            (not is_live or self._configuration_arg('include_live_dash'))
+            and 'dash' not in skip_manifests and self.get_param('youtube_include_dash_manifest', True))
         get_hls = 'hls' not in skip_manifests and self.get_param('youtube_include_hls_manifest', True)
 
         def guess_quality(f):
@@ -2765,8 +2793,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
 
         if not formats:
             if not self.get_param('allow_unplayable_formats') and traverse_obj(streaming_data, (..., 'licenseInfos')):
-                self.raise_no_formats(
-                    'This video is DRM protected.', expected=True)
+                self.report_drm(video_id)
             pemr = get_first(
                 playability_statuses,
                 ('errorScreen', 'playerErrorMessageRenderer'), expected_type=dict) or {}
@@ -3458,7 +3485,7 @@ class YoutubeTabIE(YoutubeBaseInfoExtractor):
     }, {
         'url': 'https://www.youtube.com/channel/UCoMdktPbSTixAyNGwb-UYkQ/live',
         'info_dict': {
-            'id': 'FMtPN8yp5LU',  # This will keep changing
+            'id': '3yImotZU3tw',  # This will keep changing
             'ext': 'mp4',
             'title': compat_str,
             'uploader': 'Sky News',
@@ -4427,7 +4454,7 @@ class YoutubeYtBeIE(InfoExtractor):
     }]
 
     def _real_extract(self, url):
-        mobj = re.match(self._VALID_URL, url)
+        mobj = self._match_valid_url(url)
         video_id = mobj.group('id')
         playlist_id = mobj.group('playlist_id')
         return self.url_result(
@@ -4570,7 +4597,7 @@ class YoutubeSearchURLIE(YoutubeSearchIE):
         return cls._VALID_URL
 
     def _real_extract(self, url):
-        qs = compat_parse_qs(compat_urllib_parse_urlparse(url).query)
+        qs = parse_qs(url)
         query = (qs.get('search_query') or qs.get('q'))[0]
         self._SEARCH_PARAMS = qs.get('sp', ('',))[0]
         return self._get_n_results(query, self._MAX_RESULTS)

@@ -5,7 +5,7 @@
 [![Release version](https://img.shields.io/github/v/release/yt-dlp/yt-dlp?color=blue&label=&style=for-the-badge)](https://github.com/yt-dlp/yt-dlp/releases/latest)
 [![CI Status](https://img.shields.io/github/workflow/status/yt-dlp/yt-dlp/Core%20Tests/master?label=&style=for-the-badge)](https://github.com/yt-dlp/yt-dlp/actions)
 [![License: Unlicense](https://img.shields.io/badge/-Unlicense-blue.svg?style=for-the-badge)](LICENSE)
-[![Donate](https://img.shields.io/badge/_-Donate-red.svg?logo=githubsponsors&labelColor=555555&style=for-the-badge)](Collaborators.md)
+[![Donate](https://img.shields.io/badge/_-Donate-red.svg?logo=githubsponsors&labelColor=555555&style=for-the-badge)](Collaborators.md#collaborators)
 [![Supported Sites](https://img.shields.io/badge/-Supported_Sites-brightgreen.svg?style=for-the-badge)](supportedsites.md)
 [![Discord](https://img.shields.io/discord/807245652072857610?color=blue&label=​&logo=discord&style=for-the-badge)](https://discord.gg/H5MNcFW63r)
 [![Doc Status](https://readthedocs.org/projects/yt-dlp/badge/?version=latest&style=for-the-badge)](https://yt-dlp.readthedocs.io)
@@ -64,7 +64,7 @@ The major new features from the latest release of [blackjack4494/yt-dlc](https:/
 
 * **[SponSkrub Integration](#sponskrub-sponsorblock-options)**: You can use [SponSkrub](https://github.com/yt-dlp/SponSkrub) to mark/remove sponsor sections in youtube videos by utilizing the [SponsorBlock](https://sponsor.ajay.app) API
 
-* **[Format Sorting](#sorting-formats)**: The default format sorting options have been changed so that higher resolution and better codecs will be now preferred instead of simply using larger bitrate. Furthermore, you can now specify the sort order using `-S`. This allows for much easier format selection that what is possible by simply using `--format` ([examples](#format-selection-examples))
+* **[Format Sorting](#sorting-formats)**: The default format sorting options have been changed so that higher resolution and better codecs will be now preferred instead of simply using larger bitrate. Furthermore, you can now specify the sort order using `-S`. This allows for much easier format selection than what is possible by simply using `--format` ([examples](#format-selection-examples))
 
 * **Merged with youtube-dl [commit/379f52a](https://github.com/ytdl-org/youtube-dl/commit/379f52a4954013767219d25099cce9e0f9401961)**: (v2021.06.06) You get all the latest features and patches of [youtube-dl](https://github.com/ytdl-org/youtube-dl) in addition to all the features of [youtube-dlc](https://github.com/blackjack4494/yt-dlc)
 
@@ -88,9 +88,9 @@ The major new features from the latest release of [blackjack4494/yt-dlc](https:/
 
 * **Aria2c with HLS/DASH**: You can use `aria2c` as the external downloader for DASH(mpd) and HLS(m3u8) formats
 
-* **New extractors**: AnimeLab, Philo MSO, Spectrum MSO, SlingTV MSO, Rcs, Gedi, bitwave.tv, mildom, audius, zee5, mtv.it, wimtv, pluto.tv, niconico users, discoveryplus.in, mediathek, NFHSNetwork, nebula, ukcolumn, whowatch, MxplayerShow, parlview (au), YoutubeWebArchive, fancode, Saitosan, ShemarooMe, telemundo, VootSeries, SonyLIVSeries, HotstarSeries, VidioPremier, VidioLive, RCTIPlus, TBS Live, douyin, pornflip, ParamountPlusSeries, ScienceChannel, Utreon, OpenRec
+* **New extractors**: AnimeLab, Philo MSO, Spectrum MSO, SlingTV MSO, Cablevision MSO, Rcs, Gedi, bitwave.tv, mildom, audius, zee5, mtv.it, wimtv, pluto.tv, niconico users, discoveryplus.in, mediathek, NFHSNetwork, nebula, ukcolumn, whowatch, MxplayerShow, parlview (au), YoutubeWebArchive, fancode, Saitosan, ShemarooMe, telemundo, VootSeries, SonyLIVSeries, HotstarSeries, VidioPremier, VidioLive, RCTIPlus, TBS Live, douyin, pornflip, ParamountPlusSeries, ScienceChannel, Utreon, OpenRec, BandcampMusic, blackboardcollaborate, eroprofile albums, mirrativ
 
-* **Fixed/improved extractors**: archive.org, roosterteeth.com, skyit, instagram, itv, SouthparkDe, spreaker, Vlive, akamai, ina, rumble, tennistv, amcnetworks, la7 podcasts, linuxacadamy, nitter, twitcasting, viu, crackle, curiositystream, mediasite, rmcdecouverte, sonyliv, tubi, tenplay, patreon, videa, yahoo, BravoTV, crunchyroll playlist, RTP, viki, Hotstar, vidio, vimeo, mediaset, Mxplayer
+* **Fixed/improved extractors**: archive.org, roosterteeth.com, skyit, instagram, itv, SouthparkDe, spreaker, Vlive, akamai, ina, rumble, tennistv, amcnetworks, la7 podcasts, linuxacadamy, nitter, twitcasting, viu, crackle, curiositystream, mediasite, rmcdecouverte, sonyliv, tubi, tenplay, patreon, videa, yahoo, BravoTV, crunchyroll playlist, RTP, viki, Hotstar, vidio, vimeo, mediaset, Mxplayer, nbcolympics, ParamountPlus, Newgrounds
 
 * **Subtitle extraction from manifests**: Subtitles can be extracted from streaming media manifests. See [commit/be6202f](https://github.com/yt-dlp/yt-dlp/commit/be6202f12b97858b9d716e608394b51065d0419f) for details
 
@@ -98,11 +98,11 @@ The major new features from the latest release of [blackjack4494/yt-dlc](https:/
 
 * **Portable Configuration**: Configuration files are automatically loaded from the home and root directories. See [configuration](#configuration) for details
 
-* **Output template improvements**: Output templates can now have date-time formatting, numeric offsets, object traversal etc. See [output template](#output-template) for details. Even more advanced operations can also be done with the help of `--parse-metadata`
+* **Output template improvements**: Output templates can now have date-time formatting, numeric offsets, object traversal etc. See [output template](#output-template) for details. Even more advanced operations can also be done with the help of `--parse-metadata` and `--replace-in-metadata`
 
-* **Other new options**: `--sleep-requests`, `--convert-thumbnails`, `--write-link`, `--force-download-archive`, `--force-overwrites`, `--break-on-reject` etc
+* **Other new options**: `--print`, `--sleep-requests`, `--convert-thumbnails`, `--write-link`, `--force-download-archive`, `--force-overwrites`, `--break-on-reject` etc
 
-* **Improvements**: Multiple `--postprocessor-args` and `--downloader-args`, faster archive checking, more [format selection options](#format-selection) etc
+* **Improvements**: Regex and other operators in `--match-filter`, multiple `--postprocessor-args` and `--downloader-args`, faster archive checking, more [format selection options](#format-selection) etc
 
 * **Plugin extractors**: Extractors can be loaded from an external file. See [plugins](#plugins) for details
 
@@ -138,6 +138,7 @@ Some of yt-dlp's default options are different from that of youtube-dl and youtu
 * If `ffmpeg` is used as the downloader, the downloading and merging of formats happen in a single step when possible. Use `--compat-options no-direct-merge` to revert this
 * Thumbnail embedding in `mp4` is done with mutagen if possible. Use `--compat-options embed-thumbnail-atomicparsley` to force the use of AtomicParsley instead
 * Some private fields such as filenames are removed by default from the infojson. Use `--no-clean-infojson` or `--compat-options no-clean-infojson` to revert this
+* When `--embed-subs` and `--write-subs` are used together, the subtitles are written to disk and also embedded in the media file. You can use just `--embed-subs` to embed the subs and automatically delete the seperate file. See [#630 (comment)](https://github.com/yt-dlp/yt-dlp/issues/630#issuecomment-893659460) for more info. `--compat-options no-keep-subs` can be used to revert this.
 
 For ease of use, a few more compat options are available:
 * `--compat-options all`: Use all compat options
@@ -212,7 +213,7 @@ Once you have all the necessary dependencies installed, just run `py pyinst.py`.
 You can also build the executable without any version info or metadata by using:
 
     pyinstaller.exe yt_dlp\__main__.py --onefile --name yt-dlp
-    
+
 Note that pyinstaller [does not support](https://github.com/pyinstaller/pyinstaller#requirements-and-tested-platforms) Python installed from the Windows store without using a virtual environment
 
 **For Unix**:
@@ -239,10 +240,10 @@ Then simply run `make`. You can also run `make yt-dlp` instead to compile only t
                                      (default) (Alias: --no-abort-on-error)
     --abort-on-error                 Abort downloading of further videos if an
                                      error occurs (Alias: --no-ignore-errors)
-    --dump-user-agent                Display the current browser identification
-    --list-extractors                List all supported extractors
+    --dump-user-agent                Display the current user-agent and exit
+    --list-extractors                List all supported extractors and exit
     --extractor-descriptions         Output descriptions of all supported
-                                     extractors
+                                     extractors and exit
     --force-generic-extractor        Force extraction to use the generic
                                      extractor
     --default-search PREFIX          Use this prefix for unqualified URLs. For
@@ -272,7 +273,7 @@ Then simply run `make`. You can also run `make yt-dlp` instead to compile only t
     --no-mark-watched                Do not mark videos watched (default)
     --no-colors                      Do not emit color codes in output
     --compat-options OPTS            Options that can help keep compatibility
-                                     with youtube-dl and youtube-dlc
+                                     with youtube-dl or youtube-dlc
                                      configurations by reverting some of the
                                      changes made in yt-dlp. See "Differences in
                                      default behavior" for details
@@ -550,8 +551,8 @@ Then simply run `make`. You can also run `make yt-dlp` instead to compile only t
     --no-write-thumbnail             Do not write thumbnail image to disk
                                      (default)
     --write-all-thumbnails           Write all thumbnail image formats to disk
-    --list-thumbnails                Simulate and list all available thumbnail
-                                     formats
+    --list-thumbnails                List available thumbnails of each video.
+                                     Simulate unless --no-simulate is used
 
 ## Internet Shortcut Options:
     --write-link                     Write an internet shortcut file, depending
@@ -563,30 +564,34 @@ Then simply run `make`. You can also run `make yt-dlp` instead to compile only t
     --write-desktop-link             Write a .desktop Linux internet shortcut
 
 ## Verbosity and Simulation Options:
-    -q, --quiet                      Activate quiet mode
+    -q, --quiet                      Activate quiet mode. If used with
+                                     --verbose, print the log to stderr
     --no-warnings                    Ignore warnings
     -s, --simulate                   Do not download the video and do not write
                                      anything to disk
+    --no-simulate                    Download the video even if printing/listing
+                                     options are used
     --ignore-no-formats-error        Ignore "No video formats" error. Usefull
-                                     for extracting metadata even if the video
-                                     is not actually available for download
+                                     for extracting metadata even if the videos
+                                     are not actually available for download
                                      (experimental)
     --no-ignore-no-formats-error     Throw error when no downloadable video
                                      formats are found (default)
     --skip-download                  Do not download the video but write all
                                      related files (Alias: --no-download)
-    -O, --print TEMPLATE             Simulate, quiet but print the given fields.
-                                     Either a field name or similar formatting
-                                     as the output template can be used
-    -j, --dump-json                  Simulate, quiet but print JSON information.
-                                     See "OUTPUT TEMPLATE" for a description of
-                                     available keys
-    -J, --dump-single-json           Simulate, quiet but print JSON information
-                                     for each command-line argument. If the URL
-                                     refers to a playlist, dump the whole
-                                     playlist information in a single line
-    --print-json                     Be quiet and print the video information as
-                                     JSON (video is still being downloaded)
+    -O, --print TEMPLATE             Quiet, but print the given fields for each
+                                     video. Simulate unless --no-simulate is
+                                     used. Either a field name or same syntax as
+                                     the output template can be used
+    -j, --dump-json                  Quiet, but print JSON information for each
+                                     video. Simulate unless --no-simulate is
+                                     used. See "OUTPUT TEMPLATE" for a
+                                     description of available keys
+    -J, --dump-single-json           Quiet, but print JSON information for each
+                                     url or infojson passed. Simulate unless
+                                     --no-simulate is used. If the URL refers to
+                                     a playlist, the whole playlist information
+                                     is dumped in a single line
     --force-write-archive            Force download archive entries to be
                                      written as far as no errors occur, even if
                                      -s or another simulation option is used
@@ -657,17 +662,12 @@ Then simply run `make`. You can also run `make yt-dlp` instead to compile only t
                                      actually downloadable
     --no-check-formats               Do not check that the formats selected are
                                      actually downloadable
-    -F, --list-formats               List all available formats of requested
-                                     videos
+    -F, --list-formats               List available formats of each video.
+                                     Simulate unless --no-simulate is used
     --merge-output-format FORMAT     If a merge is required (e.g.
                                      bestvideo+bestaudio), output to given
                                      container format. One of mkv, mp4, ogg,
                                      webm, flv. Ignored if no merge is required
-    --allow-unplayable-formats       Allow unplayable formats to be listed and
-                                     downloaded. All video post-processing will
-                                     also be turned off
-    --no-allow-unplayable-formats    Do not allow unplayable formats to be
-                                     listed or downloaded (default)
 
 ## Subtitle Options:
     --write-subs                     Write subtitle file
@@ -676,7 +676,8 @@ Then simply run `make`. You can also run `make yt-dlp` instead to compile only t
                                      (Alias: --write-automatic-subs)
     --no-write-auto-subs             Do not write auto-generated subtitles
                                      (default) (Alias: --no-write-automatic-subs)
-    --list-subs                      List all available subtitles for the video
+    --list-subs                      List available subtitles of each video.
+                                     Simulate unless --no-simulate is used
     --sub-format FORMAT              Subtitle format, accepts formats
                                      preference, for example: "srt" or
                                      "ass/srt/best"
@@ -711,7 +712,7 @@ Then simply run `make`. You can also run `make yt-dlp` instead to compile only t
     --audio-format FORMAT            Specify audio format to convert the audio
                                      to when -x is used. Currently supported
                                      formats are: best (default) or one of
-                                     aac|flac|mp3|m4a|opus|vorbis|wav
+                                     best|aac|flac|mp3|m4a|opus|vorbis|wav
     --audio-quality QUALITY          Specify ffmpeg audio quality, insert a
                                      value between 0 (better) and 9 (worse) for
                                      VBR or a specific bitrate like 128K
@@ -771,6 +772,10 @@ Then simply run `make`. You can also run `make yt-dlp` instead to compile only t
     --parse-metadata FROM:TO         Parse additional metadata like title/artist
                                      from other fields; see "MODIFYING METADATA"
                                      for details
+    --replace-in-metadata FIELDS REGEX REPLACE
+                                     Replace text in a metadata field using the
+                                     given regex. This option can be used
+                                     multiple times
     --xattrs                         Write metadata to the video file's xattrs
                                      (using dublin core and xdg standards)
     --fixup POLICY                   Automatically correct known faults of the
@@ -783,17 +788,22 @@ Then simply run `make`. You can also run `make yt-dlp` instead to compile only t
                                      path to the binary or its containing
                                      directory
     --exec CMD                       Execute a command on the file after
-                                     downloading and post-processing. Similar
-                                     syntax to the output template can be used
+                                     downloading and post-processing. Same
+                                     syntax as the output template can be used
                                      to pass any field as arguments to the
                                      command. An additional field "filepath"
                                      that contains the final path of the
                                      downloaded file is also available. If no
                                      fields are passed, %(filepath)q is appended
-                                     to the end of the command
+                                     to the end of the command. This option can
+                                     be used multiple times
+    --no-exec                        Remove any previously defined --exec
     --exec-before-download CMD       Execute a command before the actual
                                      download. The syntax is the same as --exec
-                                     but "filepath" is not available
+                                     but "filepath" is not available. This
+                                     option can be used multiple times
+    --no-exec-before-download        Remove any previously defined
+                                     --exec-before-download
     --convert-subs FORMAT            Convert the subtitles to another format
                                      (currently supported: srt|vtt|ass|lrc)
                                      (Alias: --convert-subtitles)
@@ -918,7 +928,7 @@ The simplest usage of `-o` is not to set any template arguments when downloading
 It may however also contain special sequences that will be replaced when downloading each video. The special sequences may be formatted according to [python string formatting operations](https://docs.python.org/2/library/stdtypes.html#string-formatting). For example, `%(NAME)s` or `%(NAME)05d`. To clarify, that is a percent symbol followed by a name in parentheses, followed by formatting operations.
 
 The field names themselves (the part inside the parenthesis) can also have some special formatting:
-1. **Object traversal**: The dictionaries and lists available in metadata can be traversed by using a `.` (dot) separator. You can also do python slicing using `:`. Eg: `%(tags.0)s`, `%(subtitles.en.-1.ext)`, `%(id.3:7:-1)s`, `%(formats.:.format_id)s`. Note that all the fields that become available using this method are not listed below. Use `-j` to see such fields
+1. **Object traversal**: The dictionaries and lists available in metadata can be traversed by using a `.` (dot) separator. You can also do python slicing using `:`. Eg: `%(tags.0)s`, `%(subtitles.en.-1.ext)s`, `%(id.3:7:-1)s`, `%(formats.:.format_id)s`. `%()s` refers to the entire infodict. Note that all the fields that become available using this method are not listed below. Use `-j` to see such fields
 1. **Addition**: Addition and subtraction of numeric fields can be done using `+` and `-` respectively. Eg: `%(playlist_index+10)03d`, `%(n_entries+1-playlist_index)d`
 1. **Date/time Formatting**: Date/time fields can be formatted according to [strftime formatting](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes) by specifying it separated from the field name using a `>`. Eg: `%(duration>%H-%M-%S)s`, `%(upload_date>%Y-%m-%d)s`, `%(epoch-3600>%H-%M-%S)s`
 1. **Default**: A default value can be specified for when the field is empty using a `|` seperator. This overrides `--output-na-template`. Eg: `%(uploader|Unknown)s`
@@ -1322,7 +1332,11 @@ $ yt-dlp -S '+res:480,codec,br'
 
 # MODIFYING METADATA
 
-The metadata obtained the the extractors can be modified by using `--parse-metadata FROM:TO`. The general syntax is to give the name of a field or a template (with similar syntax to [output template](#output-template)) to extract data from, and the format to interpret it as, separated by a colon `:`. Either a [python regular expression](https://docs.python.org/3/library/re.html#regular-expression-syntax) with named capture groups or a similar syntax to the [output template](#output-template) (only `%(field)s` formatting is supported) can be used for `TO`. The option can be used multiple times to parse and modify various fields.
+The metadata obtained the the extractors can be modified by using `--parse-metadata` and `--replace-in-metadata`
+
+`--replace-in-metadata FIELDS REGEX REPLACE` is used to replace text in any metadata field using [python regular expression](https://docs.python.org/3/library/re.html#regular-expression-syntax). [Backreferences](https://docs.python.org/3/library/re.html?highlight=backreferences#re.sub) can be used in the replace string for advanced use.
+
+The general syntax of `--parse-metadata FROM:TO` is to give the name of a field or a template (with same syntax as [output template](#output-template)) to extract data from, and the format to interpret it as, separated by a colon `:`. Either a [python regular expression](https://docs.python.org/3/library/re.html#regular-expression-syntax) with named capture groups or a similar syntax to the [output template](#output-template) (only `%(field)s` formatting is supported) can be used for `TO`. The option can be used multiple times to parse and modify various fields.
 
 Note that any field created by this can be used in the [output template](#output-template) and will also affect the media file's metadata added when using `--add-metadata`.
 
@@ -1369,20 +1383,24 @@ $ yt-dlp --parse-metadata '%(series)s S%(season_number)02dE%(episode_number)02d:
 # Set "comment" field in video metadata using description instead of webpage_url
 $ yt-dlp --parse-metadata 'description:(?s)(?P<meta_comment>.+)' --add-metadata
 
+# Replace all spaces and "_" in title and uploader with a `-`
+$ yt-dlp --replace-in-metadata 'title,uploader' '[ _]' '-'
+
 ```
 
 # EXTRACTOR ARGUMENTS
 
-Some extractors accept additional arguments which can be passed using `--extractor-args KEY:ARGS`. `ARGS` is a `;` (semicolon) seperated string of `ARG=VAL1,VAL2`. Eg: `--extractor-args "youtube:skip=dash,hls;player_client=android" --extractor-args "funimation:version=uncut"`
+Some extractors accept additional arguments which can be passed using `--extractor-args KEY:ARGS`. `ARGS` is a `;` (semicolon) seperated string of `ARG=VAL1,VAL2`. Eg: `--extractor-args "youtube:player_client=android_agegate,web;include_live_dash" --extractor-args "funimation:version=uncut"`
 
 The following extractors use this feature:
 * **youtube**
     * `skip`: `hls` or `dash` (or both) to skip download of the respective manifests
     * `player_client`: Clients to extract video data from. The main clients are `web`, `android`, `ios`, `mweb`. These also have `_music`, `_embedded`, `_agegate`, and `_creator` variants (Eg: `web_embedded`) (`mweb` has only `_agegate`). By default, `android,web` is used, but the agegate and creator variants are added as required for age-gated videos. Similarly the music variants are added for `music.youtube.com` urls. You can also use `all` to use all the clients
     * `player_skip`: `configs` - skip any requests for client configs and use defaults
+    * `include_live_dash`: Include live dash formats (These formats don't download properly)
     * `comment_sort`: `top` or `new` (default) - choose comment sorting mode (on YouTube's side).
-    * `max_comments`: maximum amount of comments to download (default all).
-    * `max_comment_depth`: maximum depth for nested comments. YouTube supports depths 1 or 2 (default). 
+    * `max_comments`: Maximum amount of comments to download (default all).
+    * `max_comment_depth`: Maximum depth for nested comments. YouTube supports depths 1 or 2 (default).
 
 * **funimation**
     * `language`: Languages to extract. Eg: `funimation:language=english,japanese`
@@ -1415,6 +1433,11 @@ While these options are redundant, they are still expected to be used due to the
     --get-thumbnail                  --print thumbnail
     -e, --get-title                  --print title
     -g, --get-url                    --print urls
+    -j, --dump-json                  --print "%()j"
+    --match-title REGEX              --match-filter "title ~= (?i)REGEX"
+    --reject-title REGEX             --match-filter "title !~= (?i)REGEX"
+    --min-views COUNT                --match-filter "view_count >=? COUNT"
+    --max-views COUNT                --match-filter "view_count <=? COUNT"
 
 
 #### Not recommended
@@ -1422,6 +1445,7 @@ While these options still work, their use is not recommended since there are oth
 
     --all-formats                    -f all
     --all-subs                       --sub-langs all --write-subs
+    --print-json                     -j --no-simulate
     --autonumber-size NUMBER         Use string formatting. Eg: %(autonumber)03d
     --autonumber-start NUMBER        Use internal field formatting like %(autonumber+NUMBER)s
     --metadata-from-title FORMAT     --parse-metadata "%(title)s:FORMAT"
@@ -1439,8 +1463,10 @@ While these options still work, their use is not recommended since there are oth
 #### Developer options
 These options are not intended to be used by the end-user
 
-    --test                           For testing extractors
+    --test                           Download only part of video for testing extractors
     --youtube-print-sig-code         For testing youtube signatures
+    --allow-unplayable-formats       List unplayable formats also
+    --no-allow-unplayable-formats    Default
 
 
 #### Old aliases
